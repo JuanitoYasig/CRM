@@ -1,0 +1,13 @@
+spring:
+    datasource:
+        #para posrgres uesar esta configuracion y cambiar el driver en el pom.xml
+        # url: jdbc:postgresql://localhost:5432/demo_db?serverTimezone=UTC
+        url: jdbc:mysql://localhost:3306/demo_spring_boot?createDatabaseIfNotExist=true
+        username: root
+        password: 
+    jpa:
+        hibernate:
+            ddl-auto: update # Esto crea y actualiza las tablas automáticamente basándose en tu código (como las migraciones)
+        show-sql: true # Imprime las consultas SQL en la terminal para que puedas depurar
+server:
+    port: 8080
