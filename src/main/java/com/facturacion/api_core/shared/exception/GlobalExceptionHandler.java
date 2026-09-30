@@ -12,6 +12,11 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * Manejador global de excepciones estandarizado.
+ * Mitiga OWASP A05 (Security Misconfiguration) evitando que trazas de error o detalles internos
+ * de la base de datos se filtren al cliente HTTP.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -24,12 +29,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(ValidationException ex) {
-        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, ex.getErrorCode(), ex.getMessage());
+        return buildResponse(HttpStatus.valueOf(422), ex.getErrorCode(), ex.getMessage());
     }
 
     @ExceptionHandler(TenantAccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleTenantDenied(TenantAccessDeniedException ex) {
-        log.warn("Alerta Multi-Tenant: {}", ex.getMessage());
+        log.warn("Alerta de Seguridad Multi-Tenant: {}", ex.getMessage());
         return buildResponse(HttpStatus.FORBIDDEN, ex.getErrorCode(), ex.getMessage());
     }
 
@@ -46,12 +51,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         String incidentId = UUID.randomUUID().toString();
-        log.error("Error no controlado [Incidente: {}]: {}", incidentId, ex.getMessage(), ex);
+        log.error("Error no controlado [Incidente ID: {}]: {}", incidentId, ex.getMessage(), ex);
 
+        // Nunca filtrar stack traces a producción para cumplir con OWASP A05
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "INTERNAL_SERVER_ERROR",
-                "Error interno del sistema GAD. Codigo de seguimiento: " + incidentId
+                "Ha ocurrido un error interno en el sistema del GAD. Código de seguimiento: " + incidentId
         );
     }
 
@@ -59,7 +65,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = Map.of(
                 "timestamp", Instant.now().toString(),
                 "status", status.value(),
-                "error", status.getReasonPhrase(),
+                "error", status.toString(),
                 "code", code,
                 "message", message,
                 "tenantId", TenantContext.getTenantId()
