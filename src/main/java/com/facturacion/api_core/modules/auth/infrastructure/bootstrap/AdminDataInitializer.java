@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Inicializador de datos semilla (Seed Data).
- * Garantiza que exista un usuario Administrador inicial para la gestión del GAD
- * si la base de datos se encuentra vacía al desplegar.
  */
 @Component
 public class AdminDataInitializer implements CommandLineRunner {
@@ -30,31 +28,33 @@ public class AdminDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        String defaultTenant = TenantContext.DEFAULT_TENANT;
-        TenantContext.setTenantId(defaultTenant);
+        String[] tenants = {"gad-central", "gad-milagro", "gad-loja", "gad-cuenca"};
 
-        try {
-            if (!usuarioRepository.existsByUsernameAndTenantId("admin", defaultTenant)) {
-                log.info("[BOOTSTRAP] Creando usuario Administrador inicial para el tenant '{}'...", defaultTenant);
+        for (String tenant : tenants) {
+            TenantContext.setTenantId(tenant);
+            try {
+                if (!usuarioRepository.existsByUsernameAndTenantId("admin", tenant)) {
+                    log.info("[BOOTSTRAP] Creando usuario Administrador inicial para el tenant '{}'...", tenant);
 
-                PasswordCryptoService.HashResult hashResult = cryptoService.hashPassword("AdminGAD2026!");
+                    PasswordCryptoService.HashResult hashResult = cryptoService.hashPassword("AdminGAD2026!");
 
-                Usuario admin = new Usuario(
-                        "admin",
-                        hashResult.hash(),
-                        hashResult.salt(),
-                        "admin@gad.gob.ec",
-                        "Administrador General del GAD",
-                        "ALCALDIA_DIRECCION_GENERAL",
-                        Rol.ADMIN_GENERAL
-                );
-                admin.setTenantId(defaultTenant);
+                    Usuario admin = new Usuario(
+                            "admin",
+                            hashResult.hash(),
+                            hashResult.salt(),
+                            "admin@gad.gob.ec",
+                            "Administrador General del GAD",
+                            "ALCALDIA_DIRECCION_GENERAL",
+                            Rol.ADMIN_GENERAL
+                    );
+                    admin.setTenantId(tenant);
 
-                usuarioRepository.save(admin);
-                log.info("[BOOTSTRAP] Usuario inicial 'admin' creado exitosamente con credenciales seguras por defecto.");
+                    usuarioRepository.save(admin);
+                    log.info("[BOOTSTRAP] Usuario inicial 'admin' creado en '{}'.", tenant);
+                }
+            } finally {
+                TenantContext.clear();
             }
-        } finally {
-            TenantContext.clear();
         }
     }
 }

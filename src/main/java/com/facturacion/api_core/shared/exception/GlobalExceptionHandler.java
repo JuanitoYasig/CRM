@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -62,14 +63,13 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<Map<String, Object>> buildResponse(HttpStatus status, String code, String message) {
-        Map<String, Object> body = Map.of(
-                "timestamp", Instant.now().toString(),
-                "status", status.value(),
-                "error", status.toString(),
-                "code", code,
-                "message", message,
-                "tenantId", TenantContext.getTenantId()
-        );
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", Instant.now().toString());
+        body.put("status", status.value());
+        body.put("error", status.toString());
+        body.put("code", code);
+        body.put("message", message != null ? message : "Error no especificado");
+        body.put("tenantId", TenantContext.getTenantId() != null ? TenantContext.getTenantId() : "NONE");
         return ResponseEntity.status(status).body(body);
     }
 }

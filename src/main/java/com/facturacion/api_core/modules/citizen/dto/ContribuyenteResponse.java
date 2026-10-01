@@ -19,11 +19,14 @@ public record ContribuyenteResponse(
         LocalDateTime createdAt
 ) {
     public static ContribuyenteResponse fromDomain(Contribuyente c) {
+        if (c == null) {
+            return null;
+        }
         return new ContribuyenteResponse(
                 c.getId(),
                 c.getTenantId(),
-                c.getTipoIdentificacion().name(),
-                c.getTipoIdentificacion().getDescripcion(),
+                c.getTipoIdentificacion() != null ? c.getTipoIdentificacion().name() : null,
+                c.getTipoIdentificacion() != null ? c.getTipoIdentificacion().getDescripcion() : null,
                 c.getNumeroIdentificacion(),
                 c.getNombres(),
                 c.getApellidos(),

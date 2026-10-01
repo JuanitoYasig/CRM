@@ -29,9 +29,13 @@ public class MonitoreoSlaVencimientoJob {
         LocalDateTime ventanaAlerta = ahora.plusHours(2);
 
         List<Tramite> tramitesEnRiesgo = tramiteRepository.findTramitesPendientesPorVencer("gad-central", ventanaAlerta);
+        if (tramitesEnRiesgo == null || tramitesEnRiesgo.isEmpty()) {
+            log.info("[JOB SLA] No se encontraron tramites con SLA proximo a vencer.");
+            return;
+        }
 
-        long vencidos = tramitesEnRiesgo.stream().filter(Tramite::estaVencido).count();
-        long proximos = tramitesEnRiesgo.size() - vencidos;
+        long vencidos = tramitesEnRiesgo.stream().filter(t -> t != null && t.estaVencido()).count();
+        long proximos = Math.max(0, tramitesEnRiesgo.size() - vencidos);
 
         log.info("[JOB SLA] Barrido finalizado. Tramites vencidos: {}, Tramites en riesgo inminente: {}",
                 vencidos, proximos);
